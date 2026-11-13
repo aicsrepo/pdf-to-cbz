@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10131c">
+  <title>Panel — PDF to CBZ</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10131c;
+      --panel: #181c28;
+      --panel-2: #202536;
+      --line: #30374b;
+      --text: #f3f4f8;
+      --muted: #9ca5ba;
+      --accent: #bdff72;
+      --accent-ink: #17200f;
+      --danger: #ff8585;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--text); background: radial-gradient(ellipse at 75% -10%, #273247 0, transparent 42%), var(--bg); }
+    button, select { font: inherit; }
+    .shell { max-width: 1050px; padding: 38px 24px 64px; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 56px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 19px; font-weight: 750; letter-spacing: -.04em; }
+    .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--accent-ink); background: var(--accent); font-size: 19px; }
+    .privacy { color: var(--muted); font-size: 13px; }
+    .privacy span { color: var(--accent); margin-right: 7px; }
+    .intro { max-width: 700px; margin-bottom: 30px; }
+    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 12px 0 14px; font-size: clamp(36px, 6vw, 58px); line-height: 1.02; letter-spacing: -.06em; }
+    .intro p { max-width: 610px; margin: 0; color: var(--muted); font-size: 16px; line-height: 1.65; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 275px; gap: 18px; align-items: start; }
+    .dropzone { min-height: 245px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; border: 1px dashed #59627a; border-radius: 18px; background: rgba(24, 28, 40, .78); text-align: center; transition: .18s ease; }
+    .dropzone.dragging { border-color: var(--accent); background: #222b29; transform: scale(1.005); }
+    .upload-icon { display: grid; place-items: center; width: 50px; height: 50px; margin-bottom: 14px; border-radius: 15px; color: var(--accent); background: #2a3241; font-size: 24px; }
+    .dropzone strong { font-size: 17px; }
+    .dropzone p { margin: 8px 0 18px; color: var(--muted); font-size: 13px; }
+    .primary, .secondary, .download { border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; transition: transform .12s, opacity .12s; }
+    .primary { padding: 12px 18px; color: var(--accent-ink); background: var(--accent); }
+    .secondary { padding: 10px 13px; color: var(--text); background: #30374b; }
+    .primary:hover, .secondary:hover, .download:hover { transform: translateY(-1px); }
+    button:disabled { cursor: not-allowed; opacity: .48; transform: none !important; }
+    .settings { padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+    .settings h2 { margin: 0 0 18px; font-size: 15px; }
+    .setting { margin: 0 0 16px; }
+    .setting label { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+    .setting select { width: 100%; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; color: var(--text); background: var(--panel-2); }
+    .settings-note { padding-top: 13px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .queue-section { margin-top: 24px; }
+    .queue-heading { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 12px; }
+    .queue-heading h2 { margin: 0; font-size: 16px; }
+    .queue-count { color: var(--muted); font-size: 12px; }
+    .queue { display: grid; gap: 9px; }
+    .empty { padding: 22px; border: 1px solid var(--line); border-radius: 13px; color: var(--muted); background: rgba(24,28,40,.5); text-align: center; font-size: 13px; }
+    .file-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+    .file-name { overflow: hidden; font-size: 13px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+    .file-meta { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .file-status { color: var(--muted); font-size: 12px; text-align: right; white-space: nowrap; }
+    .file-status.done { color: var(--accent); }
+    .file-status.error { color: var(--danger); }
+    .progress { height: 3px; margin-top: 9px; overflow: hidden; border-radius: 5px; background: #343b4f; }
+    .progress > i { display: block; width: 0; height: 100%; background: var(--accent); transition: width .15s; }
+    .actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
+    .actions-note { color: var(--muted); font-size: 11px; }
+    .download { display: inline-block; padding: 7px 10px; color: var(--accent-ink); background: var(--accent); text-decoration: none; font-size: 11px; }
+    .toast { position: fixed; right: 20px; bottom: 20px; max-width: 380px; padding: 12px 15px; border: 1px solid var(--line); border-radius: 10px; color: var(--text); background: #222838; box-shadow: 0 12px 36px #0005; font-size: 13px; }
+    .toast[hidden] { display: none; }
+    input[type=file] { display: none; }
+    @media (max-width: 730px) { .shell { padding: 25px 16px 42px; } header { margin-bottom: 42px; } .workspace { grid-template-columns: 1fr; } .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; } .settings h2, .settings-note { grid-column: 1 / -1; } .setting { margin-bottom: 12px; } }
+    @media (max-width: 450px) { .privacy { max-width: 130px; text-align: right; line-height: 1.4; } .settings { grid-template-columns: 1fr; } .settings h2, .settings-note { grid-column: auto; } .actions { align-items: flex-start; flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">▤</div> panel<span style="color:var(--accent)">.</span></div>
+      <div class="privacy"><span>●</span> Files stay on your device</div>
+    </header>
+    <section class="intro">
+      <div class="eyebrow">A better way to read</div>
+      <h1>PDFs in.<br>Comic books out.</h1>
+      <p>Turn PDFs into CBZ archives in batches of up to 40. Pages are rendered as images, neatly numbered, and ready for your favorite comic reader.</p>
+    </section>
+    <section class="workspace" aria-label="Converter">
+      <div class="dropzone" id="dropzone">
+        <div class="upload-icon" aria-hidden="true">↑</div>
+        <strong>Drop your PDFs here</strong>
+        <p>Choose up to 40 files · PDF format</p>
+        <button class="primary" id="chooseButton" type="button">Choose PDF files</button>
+        <input id="fileInput" type="file" accept="application/pdf,.pdf" multiple>
+      </div>
+      <aside class="settings">
+        <h2>Conversion settings</h2>
+        <div class="setting"><label for="scale">Image resolution</label><select id="scale"><option value="1.25">Standard · smaller files</option><option value="1.75" selected>High · recommended</option><option value="2.5">Very high · larger files</option></select></div>
+        <div class="setting"><label for="quality">JPEG quality</label><select id="quality"><option value="0.72">72% · smaller files</option><option value="0.86" selected>86% · recommended</option><option value="0.94">94% · best quality</option></select></div>
+        <div class="settings-note">Each PDF becomes its own .cbz file. For stability, up to 2 PDFs are converted concurrently; the batch can contain up to 40 files.</div>
+      </aside>
+    </section>
+    <section class="queue-section" aria-labelledby="queueTitle">
+      <div class="queue-heading"><h2 id="queueTitle">Your files</h2><span class="queue-count" id="queueCount">0 / 40</span></div>
+      <div class="queue" id="queue"><div class="empty">Your selected PDFs will appear here.</div></div>
+      <div class="actions"><span class="actions-note" id="batchStatus">Ready when you are.</span><button class="primary" id="convertButton" type="button" disabled>Convert PDFs</button></div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    (() => {
+      'use strict';
+      const MAX_FILES = 40;
+      const CONCURRENCY = 2;
+      const PDFJS_VERSION = '3.11.174';
+      const fileInput = document.getElementById('fileInput');
+      const dropzone = document.getElementById('dropzone');
+      const queueEl = document.getElementById('queue');
+      const queueCount = document.getElementById('queueCount');
+      const convertButton = document.getElementById('convertButton');
+      const batchStatus = document.getElementById('batchStatus');
+      const toast = document.getElementById('toast');
+      let items = [];
+      let running = false;
+      let toastTimer;
+      if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.js`;
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { toast.hidden = true; }, 4200);
+      }
+      function safeBaseName(name) {
+        return name.replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').trim() || 'comic';
+      }
+      function formatBytes(bytes) {
+        if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      }
+      function renderQueue() {
+        queueCount.textContent = `${items.length} / ${MAX_FILES}`;
+        convertButton.disabled = running || !items.some(item => item.status === 'ready');
+        if (!items.length) {
+          queueEl.innerHTML = '<div class="empty">Your selected PDFs will appear here.</div>';
+          return;
+        }
+        queueEl.replaceChildren(...items.map(item => {
+          const row = document.createElement('div');
+          row.className = 'file-row';
+          const main = document.createElement('div');
+          main.style.minWidth = '0';
+          const name = document.createElement('div');
+          name.className = 'file-name';
+          name.title = item.file.name;
+          name.textContent = item.file.name;
+          const meta = document.createElement('div');
+          meta.className = 'file-meta';
+          meta.textContent = item.pages ? `${item.pages} pages · ${formatBytes(item.file.size)}` : formatBytes(item.file.size);
+          const progress = document.createElement('div');
+          progress.className = 'progress';
+          const bar = document.createElement('i');
+          bar.style.width = `${item.progress}%`;
+          progress.append(bar);
+          main.append(name, meta, progress);
+          const status = document.createElement('div');
+          status.className = `file-status ${item.status === 'done' ? 'done' : item.status === 'error' ? 'error' : ''}`;
+          if (item.status === 'done' && item.url) {
+            const link = document.createElement('a');
+            link.className = 'download';
+            link.href = item.url;
+            link.download = item.outputName;
+            link.textContent = 'Download CBZ';
+            status.append(link);
+          } else {
+            status.textContent = item.status === 'working' ? item.message : item.status === 'error' ? 'Failed' : item.status === 'done' ? 'Done' : 'Ready';
+            if (item.status === 'error') status.title = item.error || 'Conversion failed';
+          }
+          row.append(main, status);
+          return row;
+        }));
+      }
+      function addFiles(fileList) {
+        const incoming = Array.from(fileList || []).filter(file => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+        if (!incoming.length) { showToast('Choose PDF files to get started.'); return; }
+        const slots = MAX_FILES - items.length;
+        if (slots <= 0) { showToast(`The batch limit is ${MAX_FILES} PDFs. Remove files to add more.`); return; }
+        const selected = incoming.slice(0, slots);
+        const existing = new Set(items.map(item => `${item.file.name}:${item.file.size}:${item.file.lastModified}`));
+        let added = 0;
+        for (const file of selected) {
+          const key = `${file.name}:${file.size}:${file.lastModified}`;
+          if (existing.has(key)) continue;
+          existing.add(key);
+          items.push({ file, status: 'ready', progress: 0, pages: 0, message: 'Waiting', url: null, blob: null, outputName: `${safeBaseName(file.name)}.cbz` });
+          added++;
+        }
+        if (incoming.length > slots) showToast(`Only ${slots} more PDF${slots === 1 ? '' : 's'} fit in this batch.`);
+        else if (!added) showToast('Those files are already in the batch.');
+        renderQueue();
+      }
+      async function canvasToJpeg(canvas, quality) {
+        return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not encode a page image.')), 'image/jpeg', quality));
+      }
+      async function convertOne(item) {
+        item.status = 'working';
+        item.message = 'Opening PDF';
+        renderQueue();
+        let pdf;
+        try {
+          const data = await item.file.arrayBuffer();
+          pdf = await pdfjsLib.getDocument({ data }).promise;
+          item.pages = pdf.numPages;
+          if (!item.pages) throw new Error('This PDF has no pages.');
+          const zip = new JSZip();
+          const folder = zip.folder(safeBaseName(item.file.name));
+          const scale = Number(document.getElementById('scale').value);
+          const quality = Number(document.getElementById('quality').value);
+          for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+            item.message = `Page ${pageNumber} of ${pdf.numPages}`;
+            const page = await pdf.getPage(pageNumber);
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.ceil(viewport.width);
+            canvas.height = Math.ceil(viewport.height);
+            const context = canvas.getContext('2d', { alpha: false });
+            if (!context) throw new Error('Canvas is unavailable in this browser.');
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: context, viewport, background: 'rgb(255,255,255)' }).promise;
+            const image = await canvasToJpeg(canvas, quality);
+            folder.file(`page-${String(pageNumber).padStart(4, '0')}.jpg`, image);
+            canvas.width = 0;
+            canvas.height = 0;
+            page.cleanup();
+            item.progress = Math.round(pageNumber / pdf.numPages * 90);
+            renderQueue();
+          }
+          item.message = 'Creating CBZ';
+          item.blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' }, metadata => {
+            item.progress = 90 + Math.round(metadata.percent / 10);
+            renderQueue();
+          });
+          item.url = URL.createObjectURL(item.blob);
+          item.status = 'done';
+          item.progress = 100;
+        } catch (error) {
+          item.status = 'error';
+          item.error = error && error.message ? error.message : 'Unexpected conversion error.';
+          item.message = item.error;
+          console.error('PDF conversion failed:', error);
+        } finally {
+          if (pdf) await pdf.destroy().catch(() => {});
+          renderQueue();
+        }
+      }
+      async function convertBatch() {
+        if (running) return;
+        if (!window.pdfjsLib || !window.JSZip) { showToast('Conversion libraries did not load. Check your internet connection and reload.'); return; }
+        const pending = items.filter(item => item.status === 'ready' || item.status === 'error');
+        if (!pending.length) return;
+        running = true;
+        convertButton.disabled = true;
+        let cursor = 0;
+        let completed = 0;
+        batchStatus.textContent = `Converting ${pending.length} PDF${pending.length === 1 ? '' : 's'} · up to ${CONCURRENCY} at a time`;
+        const worker = async () => {
+          while (cursor < pending.length) {
+            const item = pending[cursor++];
+            await convertOne(item);
+            completed++;
+            batchStatus.textContent = `${completed} of ${pending.length} PDFs processed`;
+          }
+        };
+        await Promise.all(Array.from({ length: Math.min(CONCURRENCY, pending.length) }, worker));
+        running = false;
+        const successes = pending.filter(item => item.status === 'done').length;
+        batchStatus.textContent = `${successes} of ${pending.length} converted successfully.`;
+        convertButton.disabled = !items.some(item => item.status === 'ready' || item.status === 'error');
+      }
+      document.getElementById('chooseButton').addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', event => { addFiles(event.target.files); fileInput.value = ''; });
+      convertButton.addEventListener('click', convertBatch);
+      for (const eventName of ['dragenter', 'dragover']) dropzone.addEventListener(eventName, event => { event.preventDefault(); dropzone.classList.add('dragging'); });
+      for (const eventName of ['dragleave', 'drop']) dropzone.addEventListener(eventName, event => { event.preventDefault(); dropzone.classList.remove('dragging'); });
+      dropzone.addEventListener('drop', event => addFiles(event.dataTransfer.files));
+      renderQueue();
+    })();
+  </script>
+</body>
+</html>
